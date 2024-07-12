@@ -1,5 +1,6 @@
 import logging
 from typing import Any
+from contextlib import asynccontextmanager
 
 from sqlalchemy.exc import IntegrityError, InterfaceError, OperationalError, ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncResult, AsyncSession, async_sessionmaker, create_async_engine
@@ -69,3 +70,18 @@ class PostgresEngine:
             log.error(msg=f'PostgresEngine: method select crashed: {err.orig}', exc_info=False)
         finally:
             await session.close()
+
+    async def select_all(self, stmt: BaseDB) -> Any:
+        try:
+            async with self.async_session() as session:
+                cursor: AsyncResult = await session.execute(stmt)  # noqa
+                return cursor.scalars().all() or None
+        except (OperationalError, ProgrammingError, InterfaceError) as err:
+            log.error(msg=f'PostgresEngine: method select_all crashed: {err.orig}', exc_info=False)
+        finally:
+            await session.close()
+
+    @asynccontextmanager
+    async def session(self):
+        async with self.async_session() as session:
+            yield session

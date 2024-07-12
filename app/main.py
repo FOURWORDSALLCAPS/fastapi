@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 import uvicorn
+import datetime
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
@@ -9,6 +10,8 @@ from app.engines.postgres_storage import PostgresEngine
 from app.routers import router
 from app.schemes.users import UserCreate
 from app.services.users import UserService
+from app.schemes.animals import AnimalCreate
+from app.services.animals import AnimalService
 from app.settings import settings
 
 
@@ -17,17 +20,9 @@ async def init_postgres() -> None:
     await db.create_tables()
 
 
-async def init_user() -> None:
-    user_service: UserService = UserService()
-    await user_service.create_or_update_user(
-        UserCreate(user_uuid='00000000-0000-4000-0000-000000000001', username='admin', password='admin')
-    )
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # noqa
     await init_postgres()
-    await init_user()
     yield
 
 
