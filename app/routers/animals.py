@@ -8,24 +8,24 @@ from app.services.animals import AnimalService
 router = APIRouter(prefix='/animals', tags=['Animals'])
 
 
-@router.post('/add_animal/', response_model=Animal)
-async def add_animal(
+@router.post('/create/', response_model=Animal)
+async def create_animal(
     animal_data: AnimalCreate,
     animal_service: AnimalService = Depends()
 ):
     return await animal_service.create_or_update_animal(animal_data)
 
 
-@router.post('/add_milk_record/', response_model=MilkRecord)
-async def add_milk_record(
+@router.post('/milk_record/create/', response_model=MilkRecord)
+async def create_milk_record(
     milk_record_data: MilkRecordCreate,
     animal_service: AnimalService = Depends()
 ):
     return await animal_service.add_milk_record(milk_record_data)
 
 
-@router.get('/all_animals/', response_model=List[Animal])
-async def get_all_animals(
+@router.get('/all/', response_model=List[Animal])
+async def get_animals(
     animal_filter: AnimalFilter = Depends(),
     animal_service: AnimalService = Depends()
 ):
