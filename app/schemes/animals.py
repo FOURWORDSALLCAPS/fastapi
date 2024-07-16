@@ -1,8 +1,8 @@
 from typing import Optional, List
 from datetime import datetime
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, validator
 
 
 class MilkRecord(BaseModel):
@@ -19,17 +19,27 @@ class Animal(BaseModel):
     animal_number: str
     gender: str
     birth_date: datetime
-    milk_records: List[MilkRecord]
+
+    @validator('gender')
+    def validate_gender(cls, value):
+        if value not in {'cow', 'bull'}:
+            raise ValueError('gender must be either `cow` or `bull`')
+        return value
 
     class Config:
         orm_mode = True
 
 
 class AnimalCreate(BaseModel):
-    animal_uuid: UUID
     animal_number: str
     gender: str
     birth_date: datetime
+
+    @validator('gender')
+    def validate_gender(cls, value):
+        if value not in {'cow', 'bull'}:
+            raise ValueError('gender must be either `cow` or `bull`')
+        return value
 
     class Config:
         orm_mode = True

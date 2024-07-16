@@ -1,6 +1,7 @@
 from http import HTTPStatus
 from datetime import datetime, timedelta
 from typing import List
+from uuid import uuid4
 
 from fastapi import HTTPException
 
@@ -15,7 +16,15 @@ class AnimalService:
 
     async def create_or_update_animal(self, animal_data: AnimalCreate) -> AnimalDB:
         animal_dict = animal_data.dict(exclude_none=True)
+        animal_dict['animal_uuid'] = uuid4()
         animal = AnimalDB(**animal_dict)
+
+        if await self.animal_repository.animal_exists(animal.animal_number):
+            raise HTTPException(
+                status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+                detail="An animal with the same number already exists in the database"
+            )
+
         return await self.animal_repository.add_animal(animal)
 
     async def add_milk_record(self, milk_record_data: MilkRecordCreate) -> MilkRecordDB:
@@ -37,13 +46,15 @@ class AnimalService:
             )
 
         milk_record_dict = milk_record_data.dict(exclude_none=True)
+        milk_record_dict['record_uuid'] = uuid4()
         milk_record = MilkRecordDB(**milk_record_dict)
         return await self.animal_repository.add_milk_record(milk_record)
 
     async def get_all_animals(self, animal_filter: AnimalFilter) -> List[AnimalDB]:
         animals = await self.animal_repository.get_all_animals()
         filtered_animals = []
-
+        if not animals:
+            return filtered_animals
         for animal in animals:
             if animal_filter.gender and animal.gender != animal_filter.gender:
                 continue
