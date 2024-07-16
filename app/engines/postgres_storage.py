@@ -56,8 +56,14 @@ class PostgresEngine:
             await session.close()
 
     async def select_one(self, stmt: BaseDB) -> Any:
-        result = await self.select(stmt)
-        return result[0] if result else None
+        try:
+            async with self.async_session() as session:
+                cursor: AsyncResult = await session.execute(stmt)  # noqa
+                return cursor.scalars().first() or None
+        except (OperationalError, ProgrammingError, InterfaceError) as err:
+            log.error(msg=f'PostgresEngine: method select_one crashed: {err.orig}', exc_info=False)
+        finally:
+            await session.close()
 
     async def select(self, stmt: BaseDB, no_scalars: bool = False) -> Any:
         try:
@@ -80,8 +86,3 @@ class PostgresEngine:
             log.error(msg=f'PostgresEngine: method select_all crashed: {err.orig}', exc_info=False)
         finally:
             await session.close()
-
-    @asynccontextmanager
-    async def session(self):
-        async with self.async_session() as session:
-            yield session
